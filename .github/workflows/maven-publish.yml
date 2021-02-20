@@ -1,0 +1,70 @@
+# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
+# For more information see: https://github.com/actions/setup-java#apache-maven-with-a-settings-path
+
+name: Maven Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
+        settings-path: ${{ github.workspace }} # location for the settings.xml file
+
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
+    
+    - name: Surefire Report
+      # You may pin to the exact commit or the version.
+      # uses: ScaCap/action-surefire-report@ad808943e6bfbd2e6acba7c53fdb5c89534da533
+      uses: ScaCap/action-surefire-report@v1.0.5
+      with:
+        github_token: ${{ github.token }}
+        report_paths: '**/surefire-reports/TEST-*.xml'
+
+    - name: ReportGenerator
+      # You may pin to the exact commit or the version.
+      # uses: danielpalme/ReportGenerator-GitHub-Action@b005d60392641d4e6d4ad37ef956701e914be4af
+      uses: danielpalme/ReportGenerator-GitHub-Action@4.8.4
+      with:
+        # The coverage reports that should be parsed (separated by semicolon). Globbing is supported.
+        reports: coverage.xml
+        # The directory where the generated report should be saved.
+        targetdir: coveragereport
+        # The output formats and scope (separated by semicolon) Values: Badges, Clover, Cobertura, CsvSummary, Html, HtmlChart, HtmlInline, HtmlInline_AzurePipelines, HtmlInline_AzurePipelines_Dark, HtmlSummary, JsonSummary, Latex, LatexSummary, lcov, MHtml, PngChart, SonarQube, TeamCitySummary, TextSummary, Xml, XmlSummary
+        reporttypes: HtmlInline;Cobertura;HtmlChart
+#         # Optional directories which contain the corresponding source code (separated by semicolon). The source directories are used if coverage report contains classes without path information.
+#         sourcedirs: # optional, default is 
+#         # Optional directory for storing persistent coverage information. Can be used in future reports to show coverage evolution.
+#         historydir: # optional, default is 
+#         # Optional plugin files for custom reports or custom history storage (separated by semicolon).
+#         plugins: # optional, default is 
+#         # Optional list of assemblies that should be included or excluded in the report. Exclusion filters take precedence over inclusion filters. Wildcards are allowed.
+#         assemblyfilters: # optional, default is +*
+#         # Optional list of classes that should be included or excluded in the report. Exclusion filters take precedence over inclusion filters. Wildcards are allowed.
+#         classfilters: # optional, default is +*
+#         # Optional list of files that should be included or excluded in the report. Exclusion filters take precedence over inclusion filters. Wildcards are allowed.
+#         filefilters: # optional, default is +*
+#         # The verbosity level of the log messages. Values: Verbose, Info, Warning, Error, Off
+#         verbosity: # optional, default is Info
+#         # Optional title.
+#         title: # optional, default is 
+#         # Optional tag or build version.
+#         tag: # optional, default is ${{ github.run_number }}_${{ github.run_id }}
+#         # Optional custom settings (separated by semicolon). See: https://github.com/danielpalme/ReportGenerator/wiki/Settings
+#         customSettings: # optional, default is 
+
+#     - name: Publish to GitHub Packages Apache Maven
+#       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+#       env:
+#         GITHUB_TOKEN: ${{ github.token }}
